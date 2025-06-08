@@ -1,0 +1,12 @@
+[
+  {
+    "nome": "Gui",
+    "senha": "123",
+    "saldo": 100
+  },
+  {
+    "nome": "Raquel",
+    "senha": "123",
+    "saldo": 1000
+  }
+]
