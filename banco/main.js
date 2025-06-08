@@ -1,4 +1,6 @@
 const prompt = require('prompt-sync')({ sigint: true });
+const fs = require('fs');
+const { json } = require('stream/consumers');
 
 class Conta {
     constructor(nome, senha, saldo = 100) {
@@ -33,69 +35,140 @@ class Conta {
 
 }
 
+listaConta = [];
+let usuario;
 
-let operador;
-let nome;
-let senha;
+try {
+    const dadosExistentes = fs.readFileSync('usuarios.json', 'utf-8')
+    listaConta = JSON.parse(dadosExistentes);
+} catch (err) {
+    console.log('Arquivo não encontrado, iniciando nova lista de usuário.')
+}
 
-while (operador != 3) {
+function acessoBanco() {
 
-    console.log('-=-=-=-=-=-=FranBank=-=-=-=-=-=-');
+    let operador;
 
-    console.log('1 - Logar\n2 - Registar\n3 - Sair\n');
+    while (operador != '4') {
 
-    operador = prompt('Digite o que deseja fazer: ');
+        console.log('-=-=-=-=-= FRANBANK =-=-=-=-=-');
+        console.log(`${ usuario.nome}: R$${ usuario.saldo}`)
+        console.log('1 - Depositar\n2 - Sacar\n3 - Realizar transação\n4 - Sair');
 
-    console.log('\n')
+        operador = prompt('Digite a operação que deseja realizar: ');
 
-    switch (operador) {
-        case '1':
-            let nomeLogin;
-            let senhaLogin;
+        switch (operador) {
 
-            console.log('-=-=-=-=-=-=Login=-=-=-=-=-=-');
-            nomeLogin = prompt('Nome: ');
-            senhaLogin = prompt('Senha: ');
+            case '1':
+                let deposito = parseFloat(prompt('Deposito: R$'));
+                usuario.saldo += deposito;
+                console.log(`Saldo atualizado da conta ${usuario.nome}: ${usuario.saldo}`);
+                // Atualiza o arquivo JSON
+                fs.writeFileSync('usuarios.json', JSON.stringify(listaConta, null, 2));
+                break;
 
-        case '2':
-            console.log('-=-=-=-=-=-=Registro=-=-=-=-=-=-');
-            nome = prompt('Nome: ');
-            senha = prompt('Senha: ');
+            case '2':
+                let saque = parseFloat(prompt('Saque: R$'));
+                usuario.saldo -= saque;
+                console.log(`Saldo atualizado da conta ${usuario.nome}: ${usuario.saldo}`);
+                // Atualiza o arquivo JSON
+                fs.writeFileSync('usuarios.json', JSON.stringify(listaConta, null, 2));
+                break;
 
-        case '3':
-            console.log('-=-=-=-=-=-=Programa Encerrado=-=-=-=-=-=-');
+            case '3':
+                let usuarioRecebe = prompt('Usuário que receberá a transação: ');
+                let recebedor = listaConta.find(u => u.nome === usuarioRecebe);
+                let transacao = parseFloat(prompt('Valor Transação: R$'));
+
+                usuario.saldo -= transacao;
+                recebedor.saldo += transacao;
+
+            console.log(`Saldo atualizado da conta ${ usuario.nome }: ${ usuario.saldo }`);
+
+                // Atualiza o arquivo JSON
+                fs.writeFileSync('usuarios.json', JSON.stringify(listaConta, null, 2));
+                break;
+
+            case '4':
+                console.log('Saindo...')
+                break;
+
+            default:
+                console.log('Operação inválida!')
+                break;
+        }
+
     }
 
 }
 
-console.log('Até mais');
+function login() {
+    console.log("-=-=-=-=-= LOGIN =-=-=-=-=-");
+    let login = prompt('Login: ');
+    let senhaLogin = prompt('Senha: ');
+
+    let usuarioLogado = listaConta.find(u => u.nome === login && u.senha === senhaLogin);
+
+    if (usuarioLogado) {
+        console.log(`Usuáriologado ${ login }`);
+        usuario = listaConta.find(u => u.nome === login);
+        acessoBanco();
+    } else {
+        console.log('Usuário ou senha incorretos!')
+    }
+
+}
+
+function registrarUsuario() {
+    console.log("-=-=-=-=-= NOVO CADASTRO =-=-=-=-=-");
+
+    const nome = prompt('Login: ');
+    const senha = prompt('Senha: ');
+
+    const novaConta = new Conta(nome, senha);
+
+    listaConta.push(novaConta);
+
+    fs.writeFileSync('usuarios.json', JSON.stringify(listaConta, null, 2));
+    console.log('Usuário cadastrado com sucesso!');
+
+}
+
+// 3. Exemplo de uso no menu
+let opcao;
+while (opcao !== '3') {
+    console.log('\n=== MENU ===');
+    console.log('1 - Login');
+    console.log('2 - Registrar novo usuário');
+    console.log('3 - Sair');
+
+    opcao = prompt('Escolha uma opção: ');
+
+    switch (opcao) {
+        case '1':
+            login();
+            break;
+        case '2':
+            registrarUsuario();
+            break;
+        case '3':
+            console.log('Saindo...');
+            break;
+        default:
+            console.log('Opção inválida!');
+    }
+}
 
 
-
-const conta = new Conta('Gui', '123');
-const conta2 = new Conta('Raquel', '123', 1000);
-
-console.log(conta.getSaldo());
-
-// Criando a lista de contas
-let listaConta = [];
-
-// Inserindo as contas na lista
-listaConta.push(conta);
-listaConta.push(conta2);
 
 console.log(listaConta);
 
-// Criando um JSON onde armazenarei os contas
-const jsonContas = JSON.stringify(listaConta, null, 2);
-console.log(jsonContas);
+// // Transforma a lista em um JSON
+// const jsonUsuarios = JSON.stringify(listaConta, null, 2);
 
-// Cria um arquivo JSON para guardar as contas salvas
-const fs = require('fs');
-fs.writeFile('contas.json', jsonContas, (err) => {
-    if (err) throw err;
-    console.log('Arquivo salvo como "contas.json"!');
-})
+// // Transforma o JSON em um arquivo
+// fs.writeFileSync('usuarios.json', jsonUsuarios);
 
-const dadosCarregados = JSON.parse(fs.readFileSync('contas.json', 'utf-8'));
-console.log(dadosCarregados[0].nome);
+// // Carrega o arquivo JSON
+// const dadosCarregadosUsuarios = JSON.parse(fs.readFileSync('usuarios.json', 'utf-8'));
+// console.log(dadosCarregadosUsuarios[0]);
